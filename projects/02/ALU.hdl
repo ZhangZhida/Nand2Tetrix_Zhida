@@ -1,0 +1,130 @@
+// This file is part of www.nand2tetris.org
+// and the book "The Elements of Computing Systems"
+// by Nisan and Schocken, MIT Press.
+// File name: projects/02/ALU.hdl
+
+/**
+ * The ALU (Arithmetic Logic Unit).
+ * Computes one of the following functions:
+ * x+y, x-y, y-x, 0, 1, -1, x, y, -x, -y, !x, !y,
+ * x+1, y+1, x-1, y-1, x&y, x|y on two 16-bit inputs,
+ * according to 6 input bits denoted zx,nx,zy,ny,f,no.
+ * In addition, the ALU computes two 1-bit outputs:
+ * if the ALU output == 0, zr is set to 1; otherwise zr is set to 0;
+ * if the ALU output < 0, ng is set to 1; otherwise ng is set to 0.
+ */
+
+// Implementation: the ALU logic manipulates the x and y inputs
+// and operates on the resulting values, as follows:
+// if (zx == 1) set x = 0        // 16-bit constant
+// if (nx == 1) set x = !x       // bitwise not
+// if (zy == 1) set y = 0        // 16-bit constant
+// if (ny == 1) set y = !y       // bitwise not
+// if (f == 1)  set out = x + y  // integer 2's complement addition
+// if (f == 0)  set out = x & y  // bitwise and
+// if (no == 1) set out = !out   // bitwise not
+// if (out == 0) set zr = 1
+// if (out < 0) set ng = 1
+
+CHIP ALU {
+    IN
+        x[16], y[16],  // 16-bit inputs
+        zx, // zero the x input?
+        nx, // negate the x input?
+        zy, // zero the y input?
+        ny, // negate the y input?
+        f,  // compute out = x + y (if 1) or x & y (if 0)
+        no; // negate the out output?
+
+    OUT
+        out[16], // 16-bit output
+        zr, // 1 if (out == 0), 0 otherwise
+        ng; // 1 if (out < 0),  0 otherwise
+
+    PARTS:
+   // Put you code here:
+
+ // Mux16(a=x,b[0..15]=false,sel=zx,out=outxx);
+ // Mux16(a=y,b[0..15]=false,sel=zy,out=outyy);
+ //
+ // Not16(in=outxx,out=notx);
+ // Not16(in=outyy,out=noty);
+ //
+ // Mux16(a=outxx,b=notx,sel=nx,out=outx);
+ // Mux16(a=outyy,b=noty,sel=ny,out=outy);
+ //
+ // Add16(a=outx,b=outy,out=addxy);
+ // And16(a=outx,b=outy,out=andxy);
+ //
+ // Mux16(a=andxy,b=addxy,sel=f,out=outt);
+ //
+ // Not16(in=outt,out=notoutt);
+ // Mux16(a=outt,b=notoutt,sel=no,out=outshow);
+ // And16(a=outshow,b[15]=true,b[0..14]=false,out=ng16);
+ // Or16Way(in=ng16,out=ng);
+ //
+ //
+ // Or16Way(in=outshow,out=notzr);
+ // Not(in=notzr,out=zr);
+ //
+ // And16(a=outshow,b[0..15]=true,out=out);
+
+
+
+   //zx,nx
+   Mux16(a=x, b[0]=false, b[1]=false, b[2]=false, b[3]=false, b[4]=false, b[5]=false, b[6]=false, b[7]=false, b[8]=false, b[9]=false, b[10]=false, b[11]=false, b[12]=false, b[13]=false, b[14]=false, b[15]=false, sel=zx, out=xout1);
+   Not16(in=xout1, out=notxout1);
+   Mux16(a=xout1, b=notxout1, sel=nx, out=xout2);
+  
+   //zy,ny
+   Mux16(a=y, b[0]=false, b[1]=false, b[2]=false, b[3]=false, b[4]=false, b[5]=false, b[6]=false, b[7]=false, b[8]=false, b[9]=false, b[10]=false, b[11]=false, b[12]=false, b[13]=false, b[14]=false, b[15]=false, sel=zy, out=yout1);
+   Not16(in=yout1, out=notyout1);
+   Mux16(a=yout1, b=notyout1, sel=ny, out=yout2);
+  
+   //f
+   Add16(a=xout2, b=yout2, out=xaddy);
+   And16(a=xout2, b=yout2, out=xandy);
+   Mux16(a=xandy, b=xaddy, sel=f, out=fout);
+  
+   //no
+   Not16(in=fout, out=notfout);
+  
+   //out[16]
+   Mux16(a=fout, b=notfout, sel=no, out=tmpout);
+   Mux16(a=fout, b=notfout, sel=no, out=out);
+   //Or16(a=no, b[1]=false, b[2]=false, b[3]=false, b[4]=false, b[5]=false, b[6]=false, b[7]=false, b[8]=false, b[9]=false, b[10]=false, b[11]=false, b[12]=false, b[13]=false, b[14]=false, b[15]=false, out=out);
+   
+   //zr
+   Or16Way(in=tmpout, out=notzr);
+   Not(in=notzr, out=zr);
+   
+   //ng
+   And16(a=tmpout, b[15]=true, b[0..14]=false, out=tmpng1);
+   Or16Way(in=tmpng1, out=ng);
+   
+   
+  
+   //zr
+   //Or16(a=tmpout, b[0]=false, b[1]=false, b[2]=false, b[3]=false, b[4]=false, b[5]=false, b[6]=false, b[7]=false, b[8]=false, b[9]=false, b[10]=false, b[11]=false, b[12]=false, b[13]=false, b[14]=false, b[15]=false, out=zror16out1);
+  
+  
+  // Or(a=zrorout0, b=zror16out1[1], out=zrorout1);
+	// Or(a=zrorout1, b=zror16out1[2], out=zrorout2);
+	// Or(a=zrorout2, b=zror16out1[3], out=zrorout3);
+	// Or(a=zrorout3, b=zror16out1[4], out=zrorout4);
+	// Or(a=zrorout4, b=zror16out1[5], out=zrorout5);
+	// Or(a=zrorout5, b=zror16out1[6], out=zrorout6);
+	// Or(a=zrorout6, b=zror16out1[7], out=zrorout7);
+	// Or(a=zrorout7, b=zror16out1[8], out=zrorout8);
+	// Or(a=zrorout8, b=zror16out1[9], out=zrorout9);
+	// Or(a=zrorout9, b=zror16out1[10], out=zrorout10);
+	// Or(a=zrorout10, b=zror16out1[11], out=zrorout11);
+	// Or(a=zrorout11, b=zror16out1[12], out=zrorout12);
+	// Or(a=zrorout12, b=zror16out1[13], out=zrorout13);
+	// Or(a=zrorout13, b=zror16out1[14], out=zrorout14);
+	// Or(a=zrorout14, b=zror16out1[15], out=zrorout15);
+
+
+
+
+}
